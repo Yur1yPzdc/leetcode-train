@@ -1,63 +1,67 @@
 #include <iostream>
-#include <queue>
-#include <unordered_map>
 #include <vector>
 
 using namespace std;
 class Solution {
 public:
-  int MaxDepth(int x,int parent){
-    int mx = 0;
-    for(int  i = 0;i < graph[x].size();i++)
-      if(graph[x][i]!=parent){
-          mx = max(MaxDepth(graph[x][i],x),mx);
-      }
-        return mx + 1;
-  }
-  int dist(vector<string>* recipes, vector<vector<string>>* ing, int which) {
-    queue<string> a;
-
-    unordered_map<string, int> as;
-    for (int i=0; i<(*recipes).size(); i++) as[(*recipes)[i]] = i;
-
-    vector<bool> vis((*ing).size(), false);
-    int depth=1;
-    vis[which] = true;
-
-    a.push((*recipes)[which]);
-
-    depth+=(*recipes)[which].size()+1;
-
-    while (!a.empty()) {
-      string curr = a.front();
-      a.pop();
-      depth--;
-
-      if (as.count(curr)==0)  continue;
-
-      int cind = as[curr];
-      depth+=(*recipes)[cind].size()+1;
-
-      for (auto x : (*ing)[cind]) {
-        if (!vis[cind]) {
-          vis[cind] = true;
-          a.push(curr);
+  bool are_all_in(vector<string>* ing, vector<string>* reqs) {
+    for (auto x : (*reqs)) {
+      bool x_in_ing = false;
+      for (auto y : (*ing)) {
+        if (x==y) {
+          x_in_ing = true;
+          break;
         }
       }
+      if (!x_in_ing) {
+        return false;
+      }
     }
+    return true;
   }
-  vector<string> findAllRecipes(vector<string>& recipes, vector<vector<string>>& ingredients, vector<string>& supplies) {
-    vector<string> ans;
-    queue<string> a;
-    bool were_changes_made = false;
+  vector<string> findAllRecipes(vector<string>& recipes, vector<vector<string>>& ingredients, vector<string>& supp) {
+    vector<string> supplies = supp;
+    vector<string> ans, recent;
+    vector<bool> reached  (recipes.size(), false);
+    bool were_changes_made = true;
     while (were_changes_made) {
-      for (int i=0; recipes[i] != recipes.back(); i++) {
-        vector<string> its_ingr = ingredients[i];
-        bool are_any_missing = false;
-        for (auto i : supplies) {
-          for (int ii=0; its_ingr[ii]!=its_ingr.back(); ii++ ) if (its_ingr[ii]==i) its_ingr.erase(its_ingr.begin()+ii);
+      recent={};
+      were_changes_made=false;
+      for (int i=0; i < recipes.size(); i++) {
+        if (reached[i]) continue;
+        vector<string>* its_ingr = &(ingredients[i]);
+        vector<string>* stuff=&(supplies);
+        string stufff;
+        for ( auto i : supplies) stufff+=" " + i;
+        bool is_creatable = are_all_in(stuff, its_ingr);
+        cout << recipes[i] << " " << stufff << " " << is_creatable << endl;
+        if (is_creatable) {
+          were_changes_made=true;
+          vector<string> that = {recipes[i]};
+          reached[i] = true;
+          ans.push_back(recipes[i]);
+          recent.push_back(recipes[i]);
         }
       }
+      for (auto x : recent) {
+        supplies.push_back(x);
+      }
     }
+    return ans;
   }
 };
+
+
+
+int main() {
+  Solution sol;
+  vector<string> r = {"bread","sandwich", "burger"};
+  vector<vector<string>> i = {{"yeast", "flour"}, {"bread","meat"}, {"sandwich","meat","bread"}};
+  vector<string> s = {"yeast","flour","meat"};
+
+  auto a =sol.findAllRecipes(r, i, s); 
+  for (auto x : a) {
+    cout << x << " " ;
+  }
+  return 0;
+}
